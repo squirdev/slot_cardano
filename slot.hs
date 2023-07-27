@@ -21,6 +21,7 @@ import           Plutus.Contract      as Contract
 import           PlutusTx             (Data (..))
 import qualified PlutusTx
 import           PlutusTx.Prelude     hiding (Semigroup (..), unless)
+import Plutus.V1.Ledger.Value (Value, (<=), valueOf, adaSymbol, adaToken)
 
 data DepositDatum = DepositDatum
     { depositor :: !PubKeyHash
@@ -36,7 +37,7 @@ data DepositRedeemer = Withdraw
 PlutusTx.unstableMakeIsData ''DepositRedeemer
 
 depositValidator :: DepositDatum -> DepositRedeemer -> ScriptContext -> Bool
-depositValidator DepositDatum{depositor, amount} Withdraw _ = depositor `elem` txInfoSignatories && amount <= txInfoValueLockedBy txInfo
+depositValidator DepositDatum{depositor, amount} Withdraw _ = depositor `elem` txInfoSignatories && amount <= valueOf (valuePaidTo (txInfoOutputs txInfo) depositor) adaSymbol adaToken
   where
     txInfo = scriptContextTxInfo ctx
     ctx = scriptContext
